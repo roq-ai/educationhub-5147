@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model assignment {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String               @db.VarChar(255)
+  description        String
+  course_id          String               @db.Uuid
+  teacher_id         String               @db.Uuid
+  created_at         DateTime             @default(now()) @db.Timestamp(6)
+  updated_at         DateTime             @default(now()) @db.Timestamp(6)
+  course             course               @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user               user                 @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student_assignment student_assignment[]
+}
+
+model course {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String           @db.VarChar(255)
+  grade           Int
+  organization_id String           @db.Uuid
+  created_at      DateTime         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime         @default(now()) @db.Timestamp(6)
+  assignment      assignment[]
+  organization    organization     @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lesson          lesson[]
+  student_course  student_course[]
+}
+
+model lesson {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String   @db.VarChar(255)
+  content    String
+  course_id  String   @db.Uuid
+  teacher_id String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  course     course   @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user       user     @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model organization {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description String?  @db.VarChar(255)
+  image       String?  @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  user_id     String   @db.Uuid
+  tenant_id   String   @db.VarChar(255)
+  course      course[]
+  user        user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model student_assignment {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id    String     @db.Uuid
+  assignment_id String     @db.Uuid
+  submission    String
+  feedback      String?
+  grade         Int?
+  created_at    DateTime   @default(now()) @db.Timestamp(6)
+  updated_at    DateTime   @default(now()) @db.Timestamp(6)
+  assignment    assignment @relation(fields: [assignment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user          user       @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model student_course {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id String   @db.Uuid
+  course_id  String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @default(now()) @db.Timestamp(6)
+  course     course   @relation(fields: [course_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user       user     @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String               @unique @db.VarChar(255)
+  firstName          String?              @db.VarChar(255)
+  lastName           String?              @db.VarChar(255)
+  roq_user_id        String               @db.VarChar(255)
+  tenant_id          String               @db.VarChar(255)
+  created_at         DateTime             @default(now()) @db.Timestamp(6)
+  updated_at         DateTime             @default(now()) @db.Timestamp(6)
+  assignment         assignment[]
+  lesson             lesson[]
+  organization       organization[]
+  student_assignment student_assignment[]
+  student_course     student_course[]
+}
